@@ -61,7 +61,7 @@ def advanced_upload():
         session["session_id"]=str(random.randint(10000,99999))
     session_id=session.get('session_id', '') 
     if request.method == 'GET':
-        return jsonify({"result":"suc","detail":"Here's the advaced_upload path, everything works properly. To upload file(s), POST method should be used."})
+        return jsonify({"result":"suc","detail":"Here's the advaced_upload path, session created. To upload file(s), POST method should be used.", "session_id":session_id})
     if request.form["md5"]=="complete":             #md5值为“complete”时，合并文件。
         try:
             filename=f"files/{session_id}/{request.form['filename']}"    #文件名
@@ -96,12 +96,16 @@ def advanced_upload():
             #print(len(data))
             if data_md5==origin_md5:
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
-
-                with open(filename+f".{part}.chunk","wb") as f:
-                    f.write(data)
-                return jsonify({"result":"suc","detail":f"The chunk file [{session_id}/{filename}], part[{part}]"})
+                if part=="0":
+                    with open(filename,"wb") as f:
+                        f.write(data)
+                    return jsonify({"result":"suc","detail":f"The small file [{session_id}/{filename}] uploaded"})
+                else:
+                    with open(filename+f".{part}.chunk","wb") as f:
+                        f.write(data)
+                    return jsonify({"result":"suc","detail":f"The chunk file [{session_id}/{filename}], part[{part}]"})
             else:
-                return jsonify({"result":"fail","detail":f"The chunk file [{session_id}/{filename}] DifferentMD5"})
+                return jsonify({"result":"fail","detail":f"The (chunk) file [{session_id}/{filename}] DifferentMD5"})
         except Exception as ex:
             print(ex)
             return jsonify({"result":"fail","detail":f"The chunk file [{session_id}/{filename}] met an error: {str(ex)}"})
